@@ -21,6 +21,8 @@ package processing.app;
 import cc.arduino.packages.BoardPort;
 import processing.app.legacy.PApplet;
 
+import de.mud.terminal.*;
+
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -38,6 +40,26 @@ public class SerialMonitor extends AbstractMonitor {
     super(port.getLabel());
 
     this.port = port.getAddress();
+
+    vt = new vt320(80, 24) {
+        public void write(byte[] b) {
+            if(serial != null) {
+                serial.write(new String(b));
+            }
+        }
+
+        public void beep() {
+        }
+
+        public void sendTelnetCommand(byte cmd) {
+        }
+
+        public void setWindowSize(int c, int r) {
+        }
+    };
+
+    vt.setLocalEcho(true);
+    terminal.setVDUBuffer(vt);
 
     serialRate = Preferences.getInteger("serial.debug_rate");
     serialRates.setSelectedItem(serialRate + " " + _("baud"));
@@ -59,31 +81,10 @@ public class SerialMonitor extends AbstractMonitor {
       }
     });
 
-    onSendCommand(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        send(textField.getText());
-        textField.setText("");
-      }
-    });
   }
 
   private void send(String s) {
     if (serial != null) {
-      switch (lineEndings.getSelectedIndex()) {
-        case 1:
-          s += "\n";
-          break;
-        case 2:
-          s += "\r";
-          break;
-        case 3:
-          s += "\r\n";
-          break;
-      }
-      if ("".equals(s) && lineEndings.getSelectedIndex() == 0 && !Preferences.has("runtime.line.ending.alert.notified")) {
-        noLineEndingAlert.setForeground(Color.RED);
-        Preferences.set("runtime.line.ending.alert.notified", "true");
-      }
       serial.write(s);
     }
   }
@@ -104,7 +105,6 @@ public class SerialMonitor extends AbstractMonitor {
       int[] location = getPlacement();
       String locationStr = PApplet.join(PApplet.str(location), ",");
       Preferences.set("last.serial.location", locationStr);
-      textArea.setText("");
       serial.dispose();
       serial = null;
     }

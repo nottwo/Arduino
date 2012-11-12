@@ -7,6 +7,7 @@ import cc.arduino.packages.ssh.SSHConfigFileSetup;
 import cc.arduino.packages.ssh.SSHPwdSetup;
 
 import com.jcraft.jsch.*;
+import de.mud.terminal.*;
 
 import processing.app.debug.MessageConsumer;
 import processing.app.debug.MessageSiphon;
@@ -39,19 +40,29 @@ public class NetworkMonitor extends AbstractMonitor implements MessageConsumer {
     this.port = port;
     this.ipAddress = port.getAddress();
 
-    onSendCommand(new ActionListener() {
-      public void actionPerformed(ActionEvent event) {
-        try {
-          OutputStream out = channel.getOutputStream();
-          out.write(textField.getText().getBytes());
-          out.write('\n');
-          out.flush();
-        } catch (IOException e) {
-          e.printStackTrace();
+    vt = new vt320(80, 24) {
+        public void write(byte[] b) {
+            try {
+                OutputStream out = channel.getOutputStream();
+                out.write(b);
+                out.flush();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
-        textField.setText("");
-      }
-    });
+
+        public void beep() {
+        }
+
+        public void sendTelnetCommand(byte cmd) {
+        }
+
+        public void setWindowSize(int c, int r) {
+        }
+    };
+
+    terminal.setVDUBuffer(vt);
+
   }
 
   @Override
@@ -159,7 +170,6 @@ public class NetworkMonitor extends AbstractMonitor implements MessageConsumer {
     if (channel != null) {
       inputConsumer.stop();
       channel.disconnect();
-      textArea.setText("");
     }
 
     if (session != null) {
