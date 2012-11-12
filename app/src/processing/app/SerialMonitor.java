@@ -18,7 +18,6 @@
 
 package processing.app;
 
-import processing.app.debug.TextAreaFIFO;
 import processing.core.*;
 import static processing.app.I18n._;
 
@@ -32,10 +31,6 @@ import javax.swing.text.*;
 public class SerialMonitor extends JFrame implements ActionListener {
   private Serial serial;
   private String port;
-  private TextAreaFIFO textArea;
-  private JScrollPane scrollPane;
-  private JTextField textField;
-  private JButton sendButton;
   private JCheckBox autoscrollBox;
   private JComboBox lineEndings;
   private JComboBox serialRates;
@@ -69,45 +64,10 @@ public class SerialMonitor extends JFrame implements ActionListener {
     Font editorFont = Preferences.getFont("editor.font");
     Font font = new Font(consoleFont.getName(), consoleFont.getStyle(), editorFont.getSize());
 
-    textArea = new TextAreaFIFO(8000000);
-    textArea.setRows(16);
-    textArea.setColumns(40);
-    textArea.setEditable(false);    
-    textArea.setFont(font);
-    
-    // don't automatically update the caret.  that way we can manually decide
-    // whether or not to do so based on the autoscroll checkbox.
-    ((DefaultCaret)textArea.getCaret()).setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
-    
-    scrollPane = new JScrollPane(textArea);
-    
-    getContentPane().add(scrollPane, BorderLayout.CENTER);
+
+
     
     JPanel pane = new JPanel();
-    pane.setLayout(new BoxLayout(pane, BoxLayout.X_AXIS));
-    pane.setBorder(new EmptyBorder(4, 4, 4, 4));
-
-    textField = new JTextField(40);
-    textField.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        send(textField.getText());
-        textField.setText("");
-      }});
-
-    sendButton = new JButton(_("Send"));
-    sendButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        send(textField.getText());
-        textField.setText("");
-      }});
-    
-    pane.add(textField);
-    pane.add(Box.createRigidArea(new Dimension(4, 0)));
-    pane.add(sendButton);
-    
-    getContentPane().add(pane, BorderLayout.NORTH);
-    
-    pane = new JPanel();
     pane.setLayout(new BoxLayout(pane, BoxLayout.X_AXIS));
     pane.setBorder(new EmptyBorder(4, 4, 4, 4));
     
@@ -224,7 +184,6 @@ public class SerialMonitor extends JFrame implements ActionListener {
       int[] location = getPlacement();
       String locationStr = PApplet.join(PApplet.str(location), ",");
       Preferences.set("last.serial.location", locationStr);
-      textArea.setText("");
       serial.dispose();
       serial = null;
     }
@@ -243,13 +202,6 @@ public class SerialMonitor extends JFrame implements ActionListener {
   public void actionPerformed(ActionEvent e) {
     final String s = consumeUpdateBuffer();
     if (s.length() > 0) {
-      //System.out.println("gui append " + s.length());
-      if (autoscrollBox.isSelected()) {
-        textArea.appendTrim(s);
-        textArea.setCaretPosition(textArea.getDocument().getLength());
-      } else {
-        textArea.appendNoTrim(s);
-      }
     }
   }
 
