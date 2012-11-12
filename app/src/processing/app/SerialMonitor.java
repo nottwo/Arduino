@@ -29,6 +29,8 @@ import javax.swing.border.*;
 import javax.swing.event.*;
 import javax.swing.text.*;
 
+import de.mud.terminal.*;
+
 public class SerialMonitor extends JFrame implements MessageConsumer {
   private Serial serial;
   private String port;
@@ -36,6 +38,8 @@ public class SerialMonitor extends JFrame implements MessageConsumer {
   private JComboBox lineEndings;
   private JComboBox serialRates;
   private int serialRate;
+  private SwingTerminal terminal;
+  private vt320 vt;
 
   public SerialMonitor(String port) {
     super(port);
@@ -63,8 +67,23 @@ public class SerialMonitor extends JFrame implements MessageConsumer {
     Font editorFont = Preferences.getFont("editor.font");
     Font font = new Font(consoleFont.getName(), consoleFont.getStyle(), editorFont.getSize());
 
+    vt = new vt320(80, 24) {
+      public void write(byte[] b) {
+          serial.write(new String(b));
+      }
 
+      public void beep() {
+      }
 
+      public void sendTelnetCommand(byte cmd) {
+      }
+
+      public void setWindowSize(int c, int r) {
+      }
+    };
+
+    terminal = new SwingTerminal(vt, editorFont);
+    getContentPane().add(terminal, BorderLayout.CENTER);
     
     JPanel pane = new JPanel();
     pane.setLayout(new BoxLayout(pane, BoxLayout.X_AXIS));
@@ -134,6 +153,7 @@ public class SerialMonitor extends JFrame implements MessageConsumer {
         }
       }
     }
+
   }
   
   protected void setPlacement(int[] location) {
@@ -184,6 +204,7 @@ public class SerialMonitor extends JFrame implements MessageConsumer {
   public void message(final String s) {
     SwingUtilities.invokeLater(new Runnable() {
       public void run() {
+        vt.putString(s);
       }});
   }
 }
