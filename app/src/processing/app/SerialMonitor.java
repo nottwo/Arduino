@@ -28,6 +28,8 @@ import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.text.*;
 
+import de.mud.terminal.*;
+
 public class SerialMonitor extends JFrame implements ActionListener {
   private Serial serial;
   private String port;
@@ -37,6 +39,8 @@ public class SerialMonitor extends JFrame implements ActionListener {
   private int serialRate;
   private javax.swing.Timer updateTimer;
   private StringBuffer updateBuffer;
+  private SwingTerminal terminal;
+  private vt320 vt;
 
   public SerialMonitor(String port) {
     super(port);
@@ -64,8 +68,23 @@ public class SerialMonitor extends JFrame implements ActionListener {
     Font editorFont = Preferences.getFont("editor.font");
     Font font = new Font(consoleFont.getName(), consoleFont.getStyle(), editorFont.getSize());
 
+    vt = new vt320(80, 24) {
+      public void write(byte[] b) {
+          serial.write(new String(b));
+      }
 
+      public void beep() {
+      }
 
+      public void sendTelnetCommand(byte cmd) {
+      }
+
+      public void setWindowSize(int c, int r) {
+      }
+    };
+
+    terminal = new SwingTerminal(vt, editorFont);
+    getContentPane().add(terminal, BorderLayout.CENTER);
     
     JPanel pane = new JPanel();
     pane.setLayout(new BoxLayout(pane, BoxLayout.X_AXIS));
@@ -202,6 +221,11 @@ public class SerialMonitor extends JFrame implements ActionListener {
   public void actionPerformed(ActionEvent e) {
     final String s = consumeUpdateBuffer();
     if (s.length() > 0) {
+        SwingUtilities.invokeLater(new Runnable() {
+            public void run() {
+                vt.putString(s);
+            }
+        });
     }
   }
 
