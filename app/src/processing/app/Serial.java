@@ -161,8 +161,6 @@ public class Serial implements SerialPortEventListener {
             input = port.getInputStream();
             output = port.getOutputStream();
             port.setSerialPortParams(rate, databits, stopbits, parity);
-            port.addEventListener(this);
-            port.notifyOnDataAvailable(true);
             //System.out.println("opening, ready to roll");
           }
         }
@@ -592,6 +590,16 @@ public class Serial implements SerialPortEventListener {
     System.err.println(I18n.format(_("Error inside Serial.{0}()"), where));
     e.printStackTrace();
   }
+
+  public OutputStream getOutputStream() {
+      return output;
+  }
+
+  public InputStream getInputStream() {
+      return input;
+  }
+
+
 }
 
 

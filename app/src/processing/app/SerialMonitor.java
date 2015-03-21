@@ -22,12 +22,15 @@ import processing.app.debug.MessageConsumer;
 import processing.core.*;
 import static processing.app.I18n._;
 
+import java.io.*;
 import java.awt.*;
 import java.awt.event.*;
 import javax.swing.*;
 import javax.swing.border.*;
 import javax.swing.event.*;
 import javax.swing.text.*;
+
+import com.jcraft.jcterm.*;
 
 public class SerialMonitor extends JFrame implements MessageConsumer {
   private Serial serial;
@@ -36,6 +39,9 @@ public class SerialMonitor extends JFrame implements MessageConsumer {
   private JComboBox lineEndings;
   private JComboBox serialRates;
   private int serialRate;
+
+  private JCTermSwing terminal;
+  private Thread terminalThread;
 
   public SerialMonitor(String port) {
     super(port);
@@ -64,7 +70,9 @@ public class SerialMonitor extends JFrame implements MessageConsumer {
     Font font = new Font(consoleFont.getName(), consoleFont.getStyle(), editorFont.getSize());
 
 
+    terminal = new JCTermSwing();
 
+    getContentPane().add(terminal, BorderLayout.CENTER);
     
     JPanel pane = new JPanel();
     pane.setLayout(new BoxLayout(pane, BoxLayout.X_AXIS));
@@ -168,10 +176,45 @@ public class SerialMonitor extends JFrame implements MessageConsumer {
     if (serial != null) return;
   
     serial = new Serial(port, serialRate);
-    serial.addListener(this);
+    final InputStream  is = serial.getInputStream();
+    final OutputStream os = serial.getOutputStream();
+
+    final JCTermSwing jct = terminal;
+
+    if(terminalThread != null) {
+        terminalThread.stop();
+    }
+
+    terminalThread = new Thread(new Runnable() {
+        public void run() {
+            jct.start(new Connection() {
+                public InputStream getInputStream() {
+                    return is;
+                }
+
+                public OutputStream getOutputStream() {
+                    return os;
+                }
+
+                public void requestResize(com.jcraft.jcterm.Term term) {
+                }
+
+                public void close() {
+
+                }
+            });
+        }
+    });
+    terminalThread.start();
+
   }
   
   public void closeSerialPort() {
+    if(terminalThread != null) {
+      terminalThread.stop();
+      terminalThread = null;
+    }
+
     if (serial != null) {
       int[] location = getPlacement();
       String locationStr = PApplet.join(PApplet.str(location), ",");

@@ -29,6 +29,7 @@
     <include name="app/lib/RXTXcomm.jar" />
     <include name="app/lib/ant.jar" />
     <include name="app/lib/ant-launcher.jar" />
+    <include name="app/lib/jcterm-0.0.11.jar" />
   </fileset>
 
   <target name="build" description="Build Arduino.">
